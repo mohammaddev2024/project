@@ -664,13 +664,13 @@ class AdminPanel {
                     if (json && json.url) {
                         coverUrlInput.value = json.url;
                         if (coverPreview) coverPreview.src = json.url;
-                        this.showToast('تصویر جلد آپلود و قرار داده شد');
+                        this.showMessage('تصویر جلد آپلود و قرار داده شد', 'success');
                     } else {
-                        this.showToast('خطا در آپلود تصویر');
+                        this.showMessage('خطا در آپلود تصویر', 'error');
                     }
                 } catch (err) {
                     console.error('Upload error', err);
-                    this.showToast('خطا در آپلود تصویر');
+                    this.showMessage('خطا در آپلود تصویر', 'error');
                 }
             });
         }
@@ -693,13 +693,13 @@ class AdminPanel {
                     if (json && json.url) {
                         pdfUrlInput.value = json.url;
                         if (pdfNameEl) pdfNameEl.textContent = file.name;
-                        this.showToast('فایل PDF آپلود و قرار داده شد');
+                        this.showMessage('فایل PDF آپلود و قرار داده شد', 'success');
                     } else {
-                        this.showToast('خطا در آپلود PDF');
+                        this.showMessage('خطا در آپلود PDF', 'error');
                     }
                 } catch (err) {
                     console.error('Upload error', err);
-                    this.showToast('خطا در آپلود PDF');
+                    this.showMessage('خطا در آپلود PDF', 'error');
                 }
             });
         }
@@ -721,13 +721,13 @@ class AdminPanel {
                     if (json && json.url) {
                         editAuthorUrl.value = json.url;
                         if (editAuthorPreview) editAuthorPreview.src = json.url;
-                        this.showToast('تصویر نویسنده آپلود شد');
+                        this.showMessage('تصویر نویسنده آپلود شد', 'success');
                     } else {
-                        this.showToast('خطا در آپلود تصویر نویسنده');
+                        this.showMessage('خطا در آپلود تصویر نویسنده', 'error');
                     }
                 } catch (err) {
                     console.error('Upload error', err);
-                    this.showToast('خطا در آپلود تصویر نویسنده');
+                    this.showMessage('خطا در آپلود تصویر نویسنده', 'error');
                 }
             });
         }
@@ -750,13 +750,13 @@ class AdminPanel {
                     if (json && json.url) {
                         authorPhotoUrl.value = json.url;
                         if (authorPreview) authorPreview.src = json.url;
-                        this.showToast('تصویر نویسنده آپلود شد');
+                        this.showMessage('تصویر نویسنده آپلود شد', 'success');
                     } else {
-                        this.showToast('خطا در آپلود تصویر نویسنده');
+                        this.showMessage('خطا در آپلود تصویر نویسنده', 'error');
                     }
                 } catch (err) {
                     console.error('Upload error', err);
-                    this.showToast('خطا در آپلود تصویر نویسنده');
+                    this.showMessage('خطا در آپلود تصویر نویسنده', 'error');
                 }
             });
         }

@@ -5,6 +5,9 @@ class PersianMagazine {
         this.currentFilter = 'all';
         this.currentSearchTerm = '';
         this.isLoading = false;
+        this.currentPage = 1;
+        this.articlesPerPage = 9;
+        this.totalArticles = 0;
         this.init();
     }
 
@@ -106,9 +109,34 @@ class PersianMagazine {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
                     this.currentSearchTerm = e.target.value;
+                    this.currentPage = 1; // Reset to first page when searching
                     this.loadArticles();
                 }, 300);
             });
+            
+            // Mobile search toggle
+            const searchIcon = document.querySelector('.search-icon');
+            const searchContainer = document.querySelector('.search-container');
+            
+            if (searchIcon && searchContainer) {
+                searchIcon.addEventListener('click', () => {
+                    if (window.innerWidth <= 768) {
+                        searchContainer.classList.toggle('expanded');
+                        if (searchContainer.classList.contains('expanded')) {
+                            searchInput.focus();
+                        }
+                    }
+                });
+                
+                // Close search on blur in mobile
+                searchInput.addEventListener('blur', () => {
+                    if (window.innerWidth <= 768 && !searchInput.value) {
+                        setTimeout(() => {
+                            searchContainer.classList.remove('expanded');
+                        }, 200);
+                    }
+                });
+            }
         }
 
         // Favorites filter button
@@ -392,6 +420,7 @@ class PersianMagazine {
 
     filterByCategory(category) {
         this.currentFilter = category;
+        this.currentPage = 1; // Reset to first page when filtering
         if (this.currentSection === 'home') {
             this.loadArticles();
         }
@@ -411,10 +440,16 @@ class PersianMagazine {
             articles = window.dataManager.getArticlesByCategory(this.currentFilter);
         }
 
-        this.renderArticles(articles);
+        this.totalArticles = articles.length;
+        const startIndex = (this.currentPage - 1) * this.articlesPerPage;
+        const endIndex = startIndex + this.articlesPerPage;
+        const paginatedArticles = articles.slice(startIndex, endIndex);
+        
+        this.renderArticles(paginatedArticles);
+        this.renderPagination();
         this.showLoading(false);
 
-        if (articles.length === 0) {
+        if (this.totalArticles === 0) {
             this.showEmptyState(true);
         } else {
             this.showEmptyState(false);
@@ -486,6 +521,103 @@ class PersianMagazine {
         // Add animation class
         articlesGrid.classList.add('fade-in');
         setTimeout(() => articlesGrid.classList.remove('fade-in'), 500);
+    }
+
+    renderPagination() {
+        const totalPages = Math.ceil(this.totalArticles / this.articlesPerPage);
+        
+        // Remove existing pagination
+        const existingPagination = document.querySelector('.pagination-container');
+        if (existingPagination) {
+            existingPagination.remove();
+        }
+        
+        if (totalPages <= 1) return;
+        
+        const paginationContainer = document.createElement('div');
+        paginationContainer.className = 'pagination-container';
+        
+        const pagination = document.createElement('div');
+        pagination.className = 'pagination';
+        
+        // Previous button
+        if (this.currentPage > 1) {
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'pagination-btn';
+            prevBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            prevBtn.addEventListener('click', () => this.goToPage(this.currentPage - 1));
+            pagination.appendChild(prevBtn);
+        }
+        
+        // Page numbers
+        const startPage = Math.max(1, this.currentPage - 2);
+        const endPage = Math.min(totalPages, this.currentPage + 2);
+        
+        if (startPage > 1) {
+            const firstBtn = document.createElement('button');
+            firstBtn.className = 'pagination-btn';
+            firstBtn.textContent = '1';
+            firstBtn.addEventListener('click', () => this.goToPage(1));
+            pagination.appendChild(firstBtn);
+            
+            if (startPage > 2) {
+                const dots = document.createElement('span');
+                dots.className = 'pagination-dots';
+                dots.textContent = '...';
+                pagination.appendChild(dots);
+            }
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.className = `pagination-btn ${i === this.currentPage ? 'active' : ''}`;
+            pageBtn.textContent = i;
+            pageBtn.addEventListener('click', () => this.goToPage(i));
+            pagination.appendChild(pageBtn);
+        }
+        
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                const dots = document.createElement('span');
+                dots.className = 'pagination-dots';
+                dots.textContent = '...';
+                pagination.appendChild(dots);
+            }
+            
+            const lastBtn = document.createElement('button');
+            lastBtn.className = 'pagination-btn';
+            lastBtn.textContent = totalPages;
+            lastBtn.addEventListener('click', () => this.goToPage(totalPages));
+            pagination.appendChild(lastBtn);
+        }
+        
+        // Next button
+        if (this.currentPage < totalPages) {
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'pagination-btn';
+            nextBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            nextBtn.addEventListener('click', () => this.goToPage(this.currentPage + 1));
+            pagination.appendChild(nextBtn);
+        }
+        
+        paginationContainer.appendChild(pagination);
+        
+        // Insert after articles grid
+        const articlesGrid = document.getElementById('articlesGrid');
+        if (articlesGrid && articlesGrid.parentNode) {
+            articlesGrid.parentNode.insertBefore(paginationContainer, articlesGrid.nextSibling);
+        }
+    }
+    
+    goToPage(page) {
+        this.currentPage = page;
+        this.loadArticles();
+        
+        // Scroll to top of articles
+        const articlesGrid = document.getElementById('articlesGrid');
+        if (articlesGrid) {
+            articlesGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     renderFavorites(favorites) {
@@ -628,9 +760,29 @@ class PersianMagazine {
         h4.textContent = article.author || '';
         const spanDate = document.createElement('span');
         spanDate.className = 'article-date';
-        spanDate.textContent = formattedDate || '';
-        authorInfo.appendChild(h4);
-        authorInfo.appendChild(spanDate);
+        const monthName = window.dataManager.getMonthName(magazine.month || magazine.month_number);
+        const defaultCover = 'https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=400';
+        
+        // Normalize cover image URL
+        let coverImage = magazine.coverImage || magazine.cover_image || magazine.cover || '';
+        if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('data:')) {
+            if (coverImage.startsWith('/')) {
+                coverImage = window.location.origin + coverImage;
+            } else {
+                coverImage = window.location.origin + '/' + coverImage.replace(/^\/+/, '');
+            }
+        }
+        if (!coverImage) coverImage = defaultCover;
+        
+        // Normalize PDF URL
+        let pdfUrl = magazine.pdfUrl || magazine.pdf_url || magazine.pdf || '';
+        if (pdfUrl && !pdfUrl.startsWith('http') && !pdfUrl.startsWith('data:')) {
+            if (pdfUrl.startsWith('/')) {
+                pdfUrl = window.location.origin + pdfUrl;
+            } else {
+                pdfUrl = window.location.origin + '/' + pdfUrl.replace(/^\/+/, '');
+            }
+        }
 
         header.appendChild(authorInfo);
 
@@ -639,10 +791,10 @@ class PersianMagazine {
         content.innerHTML = `
             <h3 class="card-title">${article.title || ''}</h3>
             <p class="card-excerpt">${excerptText}</p>
-            <div class="card-footer">
+                    ${pdfUrl ? `<a href="${pdfUrl}" target="_blank" class="download-btn">
                 <div class="card-tags">
                     ${Array.isArray(article.tags) ? article.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
-                </div>
+                    </a>` : `<button class="download-btn" disabled>PDF موجود نیست</button>`}
                 <span class="category-badge ${article.category || ''}">${categoryLabel}</span>
             </div>
         `;

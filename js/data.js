@@ -53,6 +53,7 @@ class DataManager {
             id: Date.now().toString(),
             ...articleData,
             excerpt: this.generateExcerpt(articleData.content, 200),
+            _photoVersion: Date.now(), // For cache busting
             createdAt: new Date().toISOString()
         };
         
@@ -113,6 +114,11 @@ class DataManager {
 
             // Recompute excerpt if content changed
             updated.excerpt = updated.content ? this.generateExcerpt(updated.content, 200) : existing.excerpt;
+            
+            // Add photo version for cache busting
+            if (updatedData.authorPhoto && updatedData.authorPhoto !== existing.authorPhoto) {
+                updated._photoVersion = Date.now();
+            }
 
             // Replace single index (no shared references)
             this.articles[index] = updated;

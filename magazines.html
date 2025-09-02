@@ -95,19 +95,39 @@
                 card.className = 'magazine-card';
 
                 const monthName = (window.dataManager && window.dataManager.getMonthName) ? window.dataManager.getMonthName(magazine.month || magazine.month_number) : '';
-                const coverImage = magazine.coverImage || magazine.cover_image || (magazine.cover || '') || defaultCover;
-                const pdfUrl = magazine.pdfUrl || magazine.pdf_url || magazine.pdf || '';
-
+            const monthName = (window.dataManager && window.dataManager.getMonthName) ? 
+                window.dataManager.getMonthName(magazine.month || magazine.month_number) : '';
+            
+            // Normalize cover image URL
+            let coverImage = magazine.coverImage || magazine.cover_image || magazine.cover || '';
+            if (coverImage && !coverImage.startsWith('http') && !coverImage.startsWith('data:')) {
+                if (coverImage.startsWith('/')) {
+                    coverImage = window.location.origin + coverImage;
+                } else {
+                    coverImage = window.location.origin + '/' + coverImage.replace(/^\/+/, '');
+                }
+            }
+            if (!coverImage) coverImage = defaultCover;
+            
+            // Normalize PDF URL
+            let pdfUrl = magazine.pdfUrl || magazine.pdf_url || magazine.pdf || '';
+            if (pdfUrl && !pdfUrl.startsWith('http') && !pdfUrl.startsWith('data:')) {
+                if (pdfUrl.startsWith('/')) {
+                    pdfUrl = window.location.origin + pdfUrl;
+                } else {
+                    pdfUrl = window.location.origin + '/' + pdfUrl.replace(/^\/+/, '');
+                }
+            }
                 // sanitize pdfUrl: allow http(s) or root-relative or data: otherwise treat empty
                 const validPdf = (typeof pdfUrl === 'string' && pdfUrl.trim().length > 0 && (pdfUrl.startsWith('http') || pdfUrl.startsWith('/') || pdfUrl.startsWith('data:')));
-
+            const validPdf = (typeof pdfUrl === 'string' && pdfUrl.trim().length > 0);
                 // create elements to avoid innerHTML injection issues
                 const img = document.createElement('img');
                 img.className = 'magazine-cover';
                 img.loading = 'lazy';
                 img.alt = magazine.title || 'مجله';
                 img.src = coverImage || defaultCover;
-                img.onerror = function() { this.onerror = null; this.src = defaultCover; };
+            img.src = coverImage;
 
                 const info = document.createElement('div');
                 info.className = 'magazine-info';
